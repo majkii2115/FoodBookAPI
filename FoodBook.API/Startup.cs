@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using FoodBook.Business.Repositories;
+using FoodBook.Business.Repositories.IRepositories;
 using FoodBook.DataAccess.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -32,10 +36,16 @@ namespace FoodBook.API
             x.UseSqlite(_configuration.GetConnectionString("SqliteConnectionString"))
             );
 
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
             services.AddControllers();
+            services.AddScoped<IUserRepo, UserRepo>();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "FoodBook.API", Version = "v1" });
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
         }
 
@@ -52,6 +62,8 @@ namespace FoodBook.API
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
             app.UseAuthorization();
 
